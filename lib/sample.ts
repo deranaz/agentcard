@@ -90,10 +90,55 @@ const CODEX_SAMPLE: SessionStats = {
   source: "generic",
 };
 
+const AGENTCARD_SAMPLE: SessionStats = {
+  title: "Build AgentCard for the 100T grant",
+  agent: "Hermes Agent",
+  model: "claude-opus-4.7-thinking-agentic",
+  startedAt: "2026-05-18T13:00:00Z",
+  durationSec: 8400,
+  messages: 132,
+  toolCalls: 64,
+  tokensIn: 412_000,
+  tokensOut: 88_500,
+  tools: [
+    { name: "write_file", count: 19 },
+    { name: "terminal", count: 14 },
+    { name: "patch", count: 9 },
+    { name: "read_file", count: 7 },
+    { name: "browser_navigate", count: 4 },
+    { name: "process", count: 4 },
+  ],
+  files: [
+    { path: "app/page.tsx", kind: "created" },
+    { path: "app/layout.tsx", kind: "created" },
+    { path: "app/globals.css", kind: "created" },
+    { path: "components/card/AgentCard.tsx", kind: "created" },
+    { path: "components/card/CardHeader.tsx", kind: "created" },
+    { path: "components/card/CardStats.tsx", kind: "created" },
+    { path: "components/card/CardTools.tsx", kind: "created" },
+    { path: "components/card/CardFiles.tsx", kind: "created" },
+    { path: "components/DropZone.tsx", kind: "created" },
+    { path: "components/SampleSwitcher.tsx", kind: "created" },
+    { path: "components/ThemeSwitcher.tsx", kind: "created" },
+    { path: "lib/parsers/index.ts", kind: "created" },
+    { path: "lib/parsers/hermes.ts", kind: "created" },
+    { path: "lib/parsers/claude.ts", kind: "created" },
+    { path: "lib/parsers/generic.ts", kind: "created" },
+    { path: "lib/share.ts", kind: "created" },
+    { path: "lib/themes.ts", kind: "created" },
+    { path: ".github/workflows/deploy.yml", kind: "created" },
+  ],
+  outcome: "success",
+  summary:
+    "Shipped AgentCard end-to-end in one session: Next.js + Tailwind, 4 parsers (Hermes/Claude/Codex/generic), 3 themes, share URLs, PNG export, and live deploy on GitHub Pages.",
+  source: "hermes",
+};
+
 export const SAMPLES: Record<string, SessionStats> = {
   hermes: HERMES_SAMPLE,
   claude: CLAUDE_SAMPLE,
   codex: CODEX_SAMPLE,
+  agentcard: AGENTCARD_SAMPLE,
 };
 
 export const SAMPLE_STATS = HERMES_SAMPLE;

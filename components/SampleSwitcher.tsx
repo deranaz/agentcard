@@ -12,6 +12,7 @@ const LABELS: Record<string, string> = {
   hermes: "Hermes",
   claude: "Claude Code",
   codex: "Codex CLI",
+  agentcard: "AgentCard (meta)",
 };
 
 export function SampleSwitcher({ active, onPick }: Props) {
