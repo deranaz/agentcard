@@ -1,17 +1,41 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { DropZone } from "@/components/DropZone";
 import { AgentCard } from "@/components/card/AgentCard";
+import { SampleSwitcher } from "@/components/SampleSwitcher";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { parseSession } from "@/lib/parsers";
-import { SAMPLE_STATS } from "@/lib/sample";
+import { SAMPLES } from "@/lib/sample";
 import type { SessionStats } from "@/lib/types";
+import type { Theme } from "@/lib/themes";
+import {
+  encodeShareHash,
+  decodeShareHash,
+  encodeThemeHash,
+  decodeThemeHash,
+} from "@/lib/share";
 
 export default function HomePage() {
-  const [stats, setStats] = useState<SessionStats>(SAMPLE_STATS);
+  const [stats, setStats] = useState<SessionStats>(SAMPLES.hermes);
+  const [theme, setTheme] = useState<Theme>("midnight");
+  const [activeSample, setActiveSample] = useState<string | null>("hermes");
   const [error, setError] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [copied, setCopied] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Hydrate from URL hash if present.
+  useEffect(() => {
+    const h = window.location.hash;
+    const fromHash = decodeShareHash(h);
+    if (fromHash) {
+      setStats(fromHash);
+      setActiveSample(null);
+    }
+    const t = decodeThemeHash(h);
+    if (t) setTheme(t);
+  }, []);
 
   const handleText = (text: string) => {
     const result = parseSession(text);
@@ -21,6 +45,15 @@ export default function HomePage() {
     }
     setError(null);
     setStats(result.stats);
+    setActiveSample(null);
+  };
+
+  const pickSample = (k: string) => {
+    const s = SAMPLES[k];
+    if (!s) return;
+    setStats(s);
+    setActiveSample(k);
+    setError(null);
   };
 
   const exportPng = async () => {
@@ -31,7 +64,7 @@ export default function HomePage() {
       const dataUrl = await toPng(cardRef.current, {
         cacheBust: true,
         pixelRatio: 2,
-        backgroundColor: "#09090b",
+        backgroundColor: theme === "mono" ? "#fafafa" : "#09090b",
       });
       const a = document.createElement("a");
       a.href = dataUrl;
@@ -44,10 +77,27 @@ export default function HomePage() {
     }
   };
 
+  const copyShareUrl = useCallback(async () => {
+    const hash = encodeShareHash(stats) + encodeThemeHash(theme);
+    const url = `${window.location.origin}${window.location.pathname}#${hash}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError("Could not copy. Browser blocked clipboard.");
+    }
+  }, [stats, theme]);
+
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-12 sm:py-16">
       <Hero />
-      <div className="mt-12 grid gap-8 lg:grid-cols-[1fr_auto]">
+      <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
+        <SampleSwitcher active={activeSample} onPick={pickSample} />
+        <span className="text-zinc-700">·</span>
+        <ThemeSwitcher active={theme} onPick={setTheme} />
+      </div>
+      <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_auto]">
         <div className="space-y-4">
           <DropZone onText={handleText} />
           {error && (
@@ -55,15 +105,9 @@ export default function HomePage() {
               {error}
             </div>
           )}
-          <button
-            onClick={() => setStats(SAMPLE_STATS)}
-            className="text-xs font-mono uppercase tracking-[0.2em] text-zinc-500 hover:text-zinc-300"
-          >
-            ← reset to sample
-          </button>
         </div>
         <div className="flex flex-col items-center gap-4">
-          <AgentCard ref={cardRef} stats={stats} />
+          <AgentCard ref={cardRef} stats={stats} theme={theme} />
           <div className="flex gap-2">
             <button
               onClick={exportPng}
@@ -71,6 +115,12 @@ export default function HomePage() {
               className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white disabled:opacity-50"
             >
               {exporting ? "exporting…" : "Download PNG"}
+            </button>
+            <button
+              onClick={copyShareUrl}
+              className="rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-zinc-100 hover:bg-white/10"
+            >
+              {copied ? "copied!" : "Copy share URL"}
             </button>
           </div>
         </div>
@@ -81,11 +131,13 @@ export default function HomePage() {
 }
 
 function slug(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40) || "session";
+  return (
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 40) || "session"
+  );
 }
 
 function Hero() {
@@ -110,7 +162,7 @@ function Footer() {
   return (
     <footer className="mt-20 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-6 text-[11px] font-mono uppercase tracking-[0.2em] text-zinc-500">
       <span>agentcard · open source</span>
-      <span>v0.1 — early build</span>
+      <span>v0.2 — themes + share</span>
     </footer>
   );
 }
