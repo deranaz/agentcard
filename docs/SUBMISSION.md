@@ -14,23 +14,29 @@ Claude  (claude-opus-4.7-thinking-agentic, via custom 9Router)
 ### 04 Description (100+ words, target 200-300)
 
 I built **AgentCard**, a tool that turns AI agent session logs into beautiful,
-shareable cards — stats, tools, files changed, outcome — ready for Twitter,
-README, or team channels. The core problem: agents do a lot of work, but the
-output is a wall of text. There is no clean way to *show* what an agent built.
-AgentCard fixes that in one drop-and-share flow.
+shareable cards — stats, tools, files changed, outcome — so the work an agent
+actually did becomes legible in one image instead of a wall of text.
 
-The whole project was built with Hermes Agent in a single session. The agent
-scaffolded the Next.js + TypeScript + Tailwind app, wrote four parsers
-(Hermes JSON, Claude Code transcript, Codex CLI, generic JSON/text), three
-themes (midnight, mono, terminal), client-side PNG export with html-to-image,
-share URLs encoded in the URL hash, and a GitHub Actions workflow that
-deploys to GitHub Pages on every push. The agent ran ~64 tool calls, wrote
-~30 files, hit a real Vercel queue stall and pivoted to GitHub Pages without
-breaking flow — exactly the kind of long-chain reasoning + autonomous
-recovery this grant is looking for.
+The whole project was built with **Hermes Agent** in a single session, and
+that's what makes it interesting. Hermes coordinated the entire build inside
+one agentic loop: scaffolded a Next.js + TypeScript + Tailwind app, wrote
+four parsers (Hermes JSON, Claude Code transcript, Codex CLI, generic
+JSON/text) with a single normalized SessionStats contract, three themes
+(midnight, mono, terminal), client-side PNG export via html-to-image, and
+share URLs encoded in the URL hash — all chained with `terminal`,
+`write_file`, surgical `patch`, `read_file`, `browser_navigate` for visual
+QA, `process` for background dev servers, and finally `gh` + `vercel` +
+GitHub Actions for the deploy pipeline.
 
-The meta proof: AgentCard's own build session is one of the sample cards on
-the live site. Drop your own log to verify; the parser supports any agent.
+What separates Hermes is multi-tool orchestration as the primary loop:
+native MCP-style tooling, browser automation alongside terminal and git, and
+the discipline to verify (HTTP 200 checks, type-checks, build-checks) before
+declaring done. When Vercel's deploy queue stalled mid-session, the agent
+diagnosed it, pivoted to GitHub Pages with a static export and a Pages
+workflow, and shipped — without losing the build. That recovery is the
+loop, not an afterthought.
+
+Meta proof: AgentCard's own build session is a sample card on the live site.
 
 ### 05 Proof of usage
 - Live demo:  https://deranaz.github.io/agentcard/
